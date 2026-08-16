@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11.11'
+        python-version: '3.11'
 
     - name: Install System Dependencies
       run: |
@@ -34,17 +34,22 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        # Explicitly align both python requirements to match 3.11.11 host container execution context
+        # Dynamically discover the precise running host Python version to prevent hardcoded mismatches
+        HOST_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
+        echo "Detected host Python version: $HOST_VERSION"
+        
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
-        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.11.11,kivy/' buildozer.spec
+        
+        # Write the dynamically matched version string directly into the build config
+        sed -i "s/^#\? \?requirements =.*/requirements = python3==$HOST_VERSION,kivy/" buildozer.spec
 
     - name: Build APK
       run: |
         yes | buildozer -v android debug
-
+        
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
