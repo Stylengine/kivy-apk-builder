@@ -16,6 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
+        # We don't pin a specific microversion here anymore
         python-version: '3.11'
 
     - name: Install System Dependencies
@@ -34,17 +35,15 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        # Dynamically discover the precise running host Python version to prevent hardcoded mismatches
-        HOST_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
-        echo "Detected host Python version: $HOST_VERSION"
-        
+        # Core android configurations
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
         
-        # Write the dynamically matched version string directly into the build config
-        sed -i "s/^#\? \?requirements =.*/requirements = python3==$HOST_VERSION,kivy/" buildozer.spec
+        # CRITICAL FIX: Simply say "python3" without hardcoding a version number!
+        # This tells Buildozer to match hostpython3 and python3 automatically.
+        sed -i 's/^#\? \?requirements =.*/requirements = python3,kivy/' buildozer.spec
 
     - name: Build APK
       run: |
