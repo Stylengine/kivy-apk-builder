@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.11.11'
 
     - name: Install System Dependencies
       run: |
@@ -34,16 +34,15 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        # Force production configurations and modern architectures
+        # Explicitly align both python requirements to match 3.11.11 host container execution context
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
-        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.11.1,kivy/' buildozer.spec
+        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.11.11,kivy/' buildozer.spec
 
     - name: Build APK
       run: |
-        # Run with absolute path output redirection to avoid truncating terminal logs
         yes | buildozer -v android debug
 
     - name: Upload APK Artifact
