@@ -16,9 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        # Force the host machine to run Python 3.14 to perfectly match Buildozer's recipe
-        python-version: '3.14.2'
-        allow-prereleases: true
+        python-version: '3.11'
 
     - name: Install System Dependencies
       run: |
@@ -27,30 +25,34 @@ jobs:
 
     - name: Install Buildozer and Cython
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install "buildozer>=1.5.0" "cython" virtualenv
+        pip install --upgrade pip
+        pip install "buildozer>=1.5.0" "cython>=0.29.33,<3.0.0" virtualenv
 
-    - name: Initialize Buildozer
+    - name: Initialize Buildozer Config
       run: |
         yes | buildozer init
 
-    - name: Configure buildozer.spec
+    - name: Configure buildozer.spec parameters
       run: |
-        # Core android configurations
+        # Reset and rewrite target architecture configurations
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
-        sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
+        sed -i 's/^#\? \?android.api =.*/android.api = 33/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
-        sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
-        
-        # Match both target python and hostpython to version 3.14.2
-        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.14.2,kivy/' buildozer.spec
+        sed -i 's/^#\? \?android.ndk =.*/android.ndk = 25c/' buildozer.spec
+        sed -i 's/^#\? \?requirements =.*/requirements = python3,kivy/' buildozer.spec
 
-    - name: Build APK
+    - name: Build Android APK
       run: |
         yes | buildozer -v android debug
-        
+
+    - name: Check Output Workspace Directory
+      run: |
+        echo "=== Listing files in output directory ==="
+        ls -la bin/ || echo "bin folder is totally empty!"
+
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
         path: bin/*.apk
+        if-no-files-found: error
