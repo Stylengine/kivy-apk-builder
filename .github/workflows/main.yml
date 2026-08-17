@@ -16,7 +16,6 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        # We don't pin a specific microversion here anymore
         python-version: '3.11'
 
     - name: Install System Dependencies
@@ -41,9 +40,8 @@ jobs:
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
         
-        # CRITICAL FIX: Simply say "python3" without hardcoding a version number!
-        # This tells Buildozer to match hostpython3 and python3 automatically.
-        sed -i 's/^#\? \?requirements =.*/requirements = python3,kivy/' buildozer.spec
+        # CRITICAL FIX: Lock down the precise target python version to match our stable host python
+        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.11.11,kivy/' buildozer.spec
 
     - name: Build APK
       run: |
