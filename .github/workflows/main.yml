@@ -34,14 +34,18 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        # Core android configurations
+        # 1. Fetch the exact point-release text running on the host system container
+        HOST_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
+        echo "Synchronizing environment with Python: $HOST_VERSION"
+        
+        # 2. Set core Android target SDK architectures
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
         
-        # CRITICAL FIX: Lock down the precise target python version to match our stable host python
-        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.11.11,kivy/' buildozer.spec
+        # 3. Dynamic injection to completely override fallback configurations
+        sed -i "s/^#\? \?requirements =.*/requirements = python3==$HOST_VERSION,kivy/" buildozer.spec
 
     - name: Build APK
       run: |
