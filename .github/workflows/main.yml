@@ -16,7 +16,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        # Force the host machine to run Python 3.14 to perfectly match Buildozer's recipe
+        python-version: '3.14.2'
+        allow-prereleases: true
 
     - name: Install System Dependencies
       run: |
@@ -25,8 +27,8 @@ jobs:
 
     - name: Install Buildozer and Cython
       run: |
-        pip install --upgrade pip
-        pip install "buildozer>=1.5.0" "cython>=0.29.33,<3.0.0" virtualenv
+        python3 -m pip install --upgrade pip
+        python3 -m pip install "buildozer>=1.5.0" "cython" virtualenv
 
     - name: Initialize Buildozer
       run: |
@@ -34,18 +36,14 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        # 1. Fetch the exact point-release text running on the host system container
-        HOST_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
-        echo "Synchronizing environment with Python: $HOST_VERSION"
-        
-        # 2. Set core Android target SDK architectures
+        # Core android configurations
         sed -i 's/^#\? \?android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/^#\? \?android.api =.*/android.api = 34/' buildozer.spec
         sed -i 's/^#\? \?android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/^#\? \?android.ndk =.*/android.ndk = 26b/' buildozer.spec
         
-        # 3. Dynamic injection to completely override fallback configurations
-        sed -i "s/^#\? \?requirements =.*/requirements = python3==$HOST_VERSION,kivy/" buildozer.spec
+        # Match both target python and hostpython to version 3.14.2
+        sed -i 's/^#\? \?requirements =.*/requirements = python3==3.14.2,kivy/' buildozer.spec
 
     - name: Build APK
       run: |
